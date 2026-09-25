@@ -61,6 +61,14 @@
     <div id="ruang-kamera" class="w-full px-2 md:px-4 mb-6 text-center">
         <!-- Container kamera & Bingkai -->
         <div class="kamera-wrapper relative">
+            
+            <!-- Amaran Pusing Telefon (Akan muncul automatik di phone) -->
+            <div id="amaran-orientasi" class="hidden absolute top-4 left-0 right-0 z-30 flex justify-center w-full">
+                <div class="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold text-sm md:text-base shadow-lg animate-pulse flex items-center gap-2 border-2 border-yellow-600 mx-4">
+                    <span>🔄 Pusingkan telefon melintang (Landscape) untuk gambar lebih luas!</span>
+                </div>
+            </div>
+
             <!-- Paparan WebCam -->
             <video id="kamera" autoplay playsinline></video>
             
@@ -115,16 +123,27 @@
         const ruangHasil = document.getElementById('ruang-hasil');
         const amaranKamera = document.getElementById('amaran-kamera');
 
+        // Fungsi semak orientasi phone pengguna
+        function semakOrientasi() {
+            const amaranOrientasi = document.getElementById('amaran-orientasi');
+            // Jika skrin lebih tinggi dari lebar (menegak) dan ia adalah phone
+            if (window.innerHeight > window.innerWidth && window.innerWidth < 768) {
+                amaranOrientasi.classList.remove('hidden');
+            } else {
+                amaranOrientasi.classList.add('hidden');
+            }
+        }
+        window.addEventListener('resize', semakOrientasi);
+        semakOrientasi(); // Semak semasa mula-mula buka
+
         // Resolusi tetapan standard HD (16:9) yang selari dengan rekaan Canva cikgu
         const resolusiKamera = { width: 1280, height: 720 };
 
         // 1. Minta kebenaran dan buka Kamera bila laman web dibuka
-        // Menggunakan 'ideal' supaya telefon pintar tidak ralat jika saiz kamera berbeza
+        // KEMAS KINI: Kita buang paksaan "ideal width/height" supaya phone guna lensa paling luas
         navigator.mediaDevices.getUserMedia({ 
             video: { 
-                width: { ideal: 1280 }, 
-                height: { ideal: 720 }, 
-                facingMode: "user" // Paksa guna kamera depan (selfie) untuk handphone
+                facingMode: "user" // Paksa guna kamera depan (selfie)
             } 
         })
             .then(stream => {
