@@ -19,7 +19,7 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            background-color: #000;
+            background-color: #111;
             border: 8px solid #ffffff;
             transition: all 0.3s ease;
         }
@@ -40,11 +40,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* Menggunakan cover dengan center alignment supaya sudut pandangan lebih luas dan tidak terzoom terlalu rapat */
-            object-fit: cover;
+            object-fit: contain;
             object-position: center center;
             transform: scaleX(-1);
-            background-color: #000;
+            background-color: #111;
         }
 
         #bingkai-overlay {
@@ -184,7 +183,7 @@
                 await video.play();
                 amaranKamera.classList.add('hidden');
             } catch (err) {
-                console.warn("Ralat membuka kamera:", err);
+                console.error("Ralat membuka kamera:", err);
                 tajukAmaran.innerText = "Akses Kamera Disekat";
                 let mesejRalat = "Gagal memuatkan kamera. Sila pastikan anda memberi kebenaran akses.";
                 
@@ -204,14 +203,11 @@
             bukaKamera();
         });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            bukaKamera();
-        });
-
         butangSnap.addEventListener('click', () => {
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
+            // Tetapan saiz simpanan tepat: 720x1280 untuk potret telefon, 1280x720 untuk landskap komputer riba
             if (adakahTelefon) {
                 canvas.width = 720;
                 canvas.height = 1280;
@@ -223,20 +219,27 @@
             ctx.save();
             ctx.scale(-1, 1);
             
-            const vRatio = video.videoWidth / video.videoHeight;
+            const vWidth = video.videoWidth || (adakahTelefon ? 720 : 1280);
+            const vHeight = video.videoHeight || (adakahTelefon ? 1280 : 720);
+            
+            const vRatio = vWidth / vHeight;
             const cRatio = canvas.width / canvas.height;
             let renderW = canvas.width;
             let renderH = canvas.height;
             let offsetX = 0;
             let offsetY = 0;
 
+            // Padanan 'contain' supaya hasil tangkapan sama persis dengan preview lebar sudut pandangan kamera
             if (vRatio > cRatio) {
-                renderW = canvas.height * vRatio;
-                offsetX = (canvas.width - renderW) / 2;
-            } else {
                 renderH = canvas.width / vRatio;
                 offsetY = (canvas.height - renderH) / 2;
+            } else {
+                renderW = canvas.height * vRatio;
+                offsetX = (canvas.width - renderW) / 2;
             }
+
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(-canvas.width, 0, canvas.width, canvas.height);
 
             ctx.drawImage(video, -canvas.width - offsetX, offsetY, renderW, renderH);
             ctx.restore();
