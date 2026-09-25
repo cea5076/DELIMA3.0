@@ -233,10 +233,10 @@
             butangMuatTurun.download = namaFailImej;
             butangMuatTurun.click();
 
-            statusDrive.innerText = "Menghantar salinan ke Google Drive pempamer...";
+            statusDrive.innerText = "";
             statusDrive.className = "text-blue-600 font-semibold mb-4 animate-pulse";
 
-            if(URL_GOOGLE_SCRIPT !== "LETAK_WEB_APP_URL_CIKGU_DI_SINI") {
+            if(URL_GOOGLE_SCRIPT !== "https://script.google.com/macros/s/AKfycbyIcPBN7vsSdO6aSaeXXkVxRA2I65-fGL5yuaqnb8IsHwWQihWYGxk8rhdraDjBGwMX/exec") {
                 fetch(URL_GOOGLE_SCRIPT, {
                     method: 'POST',
                     body: JSON.stringify({ image: dataImej, filename: namaFailImej }),
