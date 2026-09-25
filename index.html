@@ -69,7 +69,6 @@
     </div>
 
     <div id="ruang-kamera" class="w-full px-2 md:px-4 mb-6 text-center">
-        <!-- Container kamera & Bingkai dengan kelas dinamik auto-detect -->
         <div id="wrapper-kamera" class="kamera-wrapper mode-landscape">
             <video id="kamera" autoplay playsinline muted></video>
             
@@ -116,7 +115,6 @@
     <canvas id="canvas" class="hidden"></canvas>
 
     <script>
-        // Pautan Google Apps Script yang telah disetkan terus
         const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbyIcPBN7vsSdO6aSaeXXkVxRA2I65-fGL5yuaqnb8IsHwWQihWYGxk8rhdraDjBGwMX/exec";
 
         const video = document.getElementById('kamera');
@@ -173,7 +171,6 @@
                     tracks.forEach(track => track.stop());
                 }
 
-                // Tetapan resolusi optimum mengikut jenis peranti untuk mengelakkan zum melampau
                 const constraints = {
                     video: {
                         facingMode: "user",
@@ -206,13 +203,7 @@
             }
         }
 
-        // Event listener untuk butang buka kamera (mematuhi polisi privasi pelayar)
         butangMulaKamera.addEventListener('click', () => {
-            bukaKamera();
-        });
-
-        // Cuba buka secara automatik apabila halaman dimuatkan
-        window.addEventListener('DOMContentLoaded', () => {
             bukaKamera();
         });
 
@@ -220,7 +211,6 @@
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            // Tetapkan saiz canvas mengikut resolusi fizikal sebenar video kamera peranti (mengekalkan nisbah sebenar telefon/laptop)
             canvas.width = video.videoWidth || (adakahTelefon ? 720 : 1280);
             canvas.height = video.videoHeight || (adakahTelefon ? 1280 : 720);
 
@@ -245,7 +235,6 @@
             statusDrive.innerText = "";
             statusDrive.className = "text-blue-600 font-semibold mb-4 animate-pulse";
 
-            // Hantar data imej asal mengikut saiz peranti ke Google Apps Script
             fetch(URL_GOOGLE_SCRIPT, {
                 method: 'POST',
                 body: JSON.stringify({ image: dataImej, filename: namaFailImej }),
