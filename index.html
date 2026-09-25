@@ -19,7 +19,7 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            background-color: #111;
+            background-color: #000000;
             border: 8px solid #ffffff;
             transition: all 0.3s ease;
         }
@@ -31,7 +31,7 @@
 
         .mode-portrait {
             aspect-ratio: 9 / 16;
-            max-width: 420px;
+            max-width: 400px;
         }
 
         #kamera {
@@ -40,11 +40,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* Menggunakan contain supaya sudut pandangan luas dan tidak zoom melampau */
-            object-fit: contain;
+            object-fit: cover;
             object-position: center center;
             transform: scaleX(-1);
-            background-color: #111;
+            background-color: #000000;
         }
 
         #bingkai-overlay {
@@ -76,7 +75,7 @@
             
             <img id="bingkai-overlay" src="" alt="Bingkai Photobooth">
             
-            <!-- Amaran Kebenaran Kamera (Permission Error Handler) -->
+            <!-- Amaran Kebenaran Kamera -->
             <div id="amaran-kamera" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-95 text-white p-6 z-20">
                 <div class="bg-blue-950 border border-blue-500 rounded-xl p-6 max-w-md mx-auto text-center shadow-2xl">
                     <span class="text-5xl mb-3 block">📸</span>
@@ -84,14 +83,14 @@
                     <p id="teks-ralat-kamera" class="text-sm md:text-base text-gray-200 mb-6 leading-relaxed">
                         Sila klik butang di bawah untuk membenarkan akses kamera pada peranti anda.
                     </p>
-                    <button id="butang-mula-kamera" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 text-lg cursor-pointer">
+                    <button id="butang-mula-kamera" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 text-lg">
                         🔓 Benarkan & Buka Kamera
                     </button>
                 </div>
             </div>
         </div>
         
-        <button id="butang-snap" class="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-3 px-10 rounded-full text-xl shadow-[0_10px_20px_rgba(37,99,235,0.4)] transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 active:scale-95 border-4 border-blue-300 cursor-pointer">
+        <button id="butang-snap" class="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-3 px-10 rounded-full text-xl shadow-[0_10px_20px_rgba(37,99,235,0.4)] transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 active:scale-95 border-4 border-blue-300">
             📸 SNAP GAMBAR!
         </button>
     </div>
@@ -99,13 +98,13 @@
     <div id="ruang-hasil" class="w-full px-4 text-center hidden">
         <h2 class="text-2xl md:text-3xl font-bold text-green-600 mb-4 drop-shadow-sm">Gambar Berjaya Disimpan! 🎉</h2>
         
-        <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse">Menghantar salinan ke Google Drive pempamer...</p>
+        <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse"></p>
         
         <div id="wrapper-hasil" class="kamera-wrapper mode-landscape mb-6">
             <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
         </div>
         <div class="flex flex-wrap justify-center gap-4">
-            <button id="butang-semula" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 text-base md:text-lg cursor-pointer">
+            <button id="butang-semula" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 text-base md:text-lg">
                 🔄 Ambil Gambar Baru
             </button>
             <a id="butang-muatturun" href="#" download="Photobooth_DELIMa.png" class="hidden"></a>
@@ -136,7 +135,6 @@
         const wrapperKamera = document.getElementById('wrapper-kamera');
         const wrapperHasil = document.getElementById('wrapper-hasil');
 
-        // Pengesanan peranti mudah alih
         const adakahTelefon = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
 
         let failBingkaiPilihan = "";
@@ -158,7 +156,6 @@
                 : 'https://placehold.co/1280x720/transparent/blue?text=Bingkai+Landscape+(1280x720)';
         };
 
-        // Fungsi membuka kamera dengan pengendalian ralat Permission Denied
         async function bukaKamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 tajukAmaran.innerText = "Tidak Disokong";
@@ -187,11 +184,11 @@
                 await video.play();
                 amaranKamera.classList.add('hidden');
             } catch (err) {
-                console.error("Ralat membuka kamera:", err);
-                tajukAmaran.innerText = "Akses Kamera Disekat";
-                let mesejRalat = "Gagal memuatkan kamera. Sila pastikan anda memberi kebenaran akses.";
+                console.warn("Ralat membuka kamera:", err);
+                tajukAmaran.innerText = "Akses Kamera Disekat / Diperlukan";
+                let mesejRalat = "Sila klik butang di bawah dan pilih 'Allow' atau 'Benarkan' apabila pelayar web meminta kebenaran kamera.";
                 
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message.includes('Permission denied')) {
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || (err.message && err.message.includes('Permission denied'))) {
                     mesejRalat = "Akses kamera telah ditolak (Permission denied). Sila klik ikon kunci di bar alamat pelayar web anda, tukar tetapan kamera kepada <b>Allow</b>, kemudian klik butang di bawah.";
                 } else if (err.name === 'NotFoundError') {
                     mesejRalat = "Tiada peranti kamera dikesan pada peranti ini.";
@@ -207,12 +204,16 @@
             bukaKamera();
         });
 
-        // Event listener snap gambar
+        window.addEventListener('DOMContentLoaded', () => {
+            // Kita cuba buka kamera secara automatik, jika disekat skrin amaran kekal terpapar mesra pengguna
+            bukaKamera();
+        });
+
         butangSnap.addEventListener('click', () => {
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            // Tetapan dimensi kanvas tepat (Portrait: 720x1280, Landscape: 1280x720)
+            // Tetapan saiz simpanan tepat: Portrait 720x1280, Landscape 1280x720
             if (adakahTelefon) {
                 canvas.width = 720;
                 canvas.height = 1280;
@@ -235,14 +236,14 @@
             let offsetY = 0;
 
             if (vRatio > cRatio) {
-                renderH = canvas.width / vRatio;
-                offsetY = (canvas.height - renderH) / 2;
-            } else {
                 renderW = canvas.height * vRatio;
                 offsetX = (canvas.width - renderW) / 2;
+            } else {
+                renderH = canvas.width / vRatio;
+                offsetY = (canvas.height - renderH) / 2;
             }
 
-            ctx.fillStyle = '#111111';
+            ctx.fillStyle = '#000000';
             ctx.fillRect(-canvas.width, 0, canvas.width, canvas.height);
 
             ctx.drawImage(video, -canvas.width - offsetX, offsetY, renderW, renderH);
