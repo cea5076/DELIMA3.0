@@ -39,7 +39,9 @@
         #kamera {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            /* Dikurangkan zoom dengan meluaskan pandangan (mengelakkan muka terlalu besar) */
+            object-fit: contain;
+            background-color: #000;
             transform: scaleX(-1);
         }
 
@@ -80,7 +82,7 @@
                     <span class="text-5xl mb-3 block">📸</span>
                     <h3 class="text-xl font-bold text-blue-300 mb-2" id="tajuk-amaran">Sedia Untuk Mula?</h3>
                     <p id="teks-ralat-kamera" class="text-sm md:text-base text-gray-200 mb-6 leading-relaxed">
-                        Sila klik butang di bawah untuk membenarkan akses kamera pada peranti anda. (Elakkan paparan zum berlebihan).
+                        Sila klik butang di bawah untuk membenarkan akses kamera pada peranti anda.
                     </p>
                     <button id="butang-mula-kamera" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 text-lg">
                         🔓 Benarkan & Buka Kamera
@@ -97,7 +99,7 @@
     <div id="ruang-hasil" class="w-full px-4 text-center hidden">
         <h2 class="text-3xl font-bold text-green-600 mb-6 drop-shadow-sm">Gambar Berjaya Disimpan! 🎉</h2>
         
-        <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse"></p>
+        <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse">Menghantar salinan ke Google Drive pempamer...</p>
         
         <div id="wrapper-hasil" class="kamera-wrapper mode-landscape mb-8">
             <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
@@ -170,12 +172,11 @@
                     tracks.forEach(track => track.stop());
                 }
 
-                // Tetapan kamera fleksibel tanpa paksaan zoom keterlaluan
                 const constraints = {
                     video: {
                         facingMode: "user",
-                        width: { ideal: adakahTelefon ? 720 : 1280, max: 1920 },
-                        height: { ideal: adakahTelefon ? 1280 : 720, max: 1080 }
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     },
                     audio: false
                 };
@@ -185,12 +186,12 @@
                 await video.play();
                 amaranKamera.classList.add('hidden');
             } catch (err) {
-                console.warn("Ralat membuka kamera (dikendalikan dengan selamat):", err.message || err);
+                console.error("Ralat membuka kamera:", err);
                 tajukAmaran.innerText = "Akses Kamera Disekat";
                 let mesejRalat = "Gagal memuatkan kamera. Sila pastikan tiada aplikasi lain yang sedang menggunakan kamera anda.";
                 
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || (err.message && err.message.includes('Permission denied'))) {
-                    mesejRalat = "Akses kamera telah ditolak oleh pelayar web. Sila klik ikon kunci / kamera di bar alamat pelayar web anda, tukar kepada <b>Allow</b>, kemudian klik butang di bawah.";
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message.includes('Permission denied')) {
+                    mesejRalat = "Akses kamera telah ditolak. Sila klik butang di bawah atau klik ikon kunci pada bar alamat pelayar untuk membenarkan akses <b>Allow</b>.";
                 } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
                     mesejRalat = "Tiada peranti kamera dikesan pada peranti ini.";
                 } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
@@ -198,7 +199,7 @@
                 }
                 
                 teksRalatKamera.innerHTML = mesejRalat;
-                butangMulaKamera.innerText = "🔄 Cuba Buka Semula Kamera";
+                butangMulaKamera.innerText = "🔄 Cuba Buka Semula";
                 amaranKamera.classList.remove('hidden');
             }
         }
@@ -208,16 +209,39 @@
             bukaKamera();
         });
 
+        // Cuba buka secara automatik apabila halaman dimuatkan
+        window.addEventListener('DOMContentLoaded', () => {
+            bukaKamera();
+        });
+
         butangSnap.addEventListener('click', () => {
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            canvas.width = video.videoWidth || (adakahTelefon ? 720 : 1280);
-            canvas.height = video.videoHeight || (adakahTelefon ? 1280 : 720);
+            // Menetapkan resolusi lukisan kanvas mengikut tetapan bingkai standard asal tanpa mengubah struktur
+            canvas.width = adakahTelefon ? 720 : 1280;
+            canvas.height = adakahTelefon ? 1280 : 720;
 
             ctx.save();
             ctx.scale(-1, 1);
-            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            
+            // Pengiraan proporsional mengelakkan muka terzoom atau terpotong pada hasil akhir
+            const vRatio = video.videoWidth / video.videoHeight;
+            const cRatio = canvas.width / canvas.height;
+            let dWidth = canvas.width;
+            let dHeight = canvas.height;
+            let dX = 0;
+            let dY = 0;
+
+            if (vRatio > cRatio) {
+                dHeight = canvas.width / vRatio;
+                dY = (canvas.height - dHeight) / 2;
+            } else {
+                dWidth = canvas.height * vRatio;
+                dX = (canvas.width - dWidth) / 2;
+            }
+
+            ctx.drawImage(video, -dX - dWidth, dY, dWidth, dHeight);
             ctx.restore();
 
             if (bingkaiOverlay.complete && bingkaiOverlay.naturalHeight !== 0) {
