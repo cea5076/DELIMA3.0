@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photobooth Digital DELIMa 3.0</title>
+    <title>Photobooth DELIMa 3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -39,10 +39,10 @@
         #kamera {
             width: 100%;
             height: 100%;
-            /* Dikurangkan zoom dengan meluaskan pandangan (mengelakkan muka terlalu besar) */
+            /* Guna contain supaya muka tidak terlalu zoom rapat (lebar sudut pandangan) */
             object-fit: contain;
-            background-color: #000;
             transform: scaleX(-1);
+            background-color: #000;
         }
 
         #bingkai-overlay {
@@ -51,7 +51,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: fill;
             pointer-events: none;
             z-index: 10;
         }
@@ -116,6 +116,7 @@
     <canvas id="canvas" class="hidden"></canvas>
 
     <script>
+        // Pautan Google Apps Script yang telah disetkan terus
         const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbyIcPBN7vsSdO6aSaeXXkVxRA2I65-fGL5yuaqnb8IsHwWQihWYGxk8rhdraDjBGwMX/exec";
 
         const video = document.getElementById('kamera');
@@ -172,11 +173,12 @@
                     tracks.forEach(track => track.stop());
                 }
 
+                // Tetapan resolusi optimum mengikut jenis peranti untuk mengelakkan zum melampau
                 const constraints = {
                     video: {
                         facingMode: "user",
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        width: { ideal: adakahTelefon ? 720 : 1280 },
+                        height: { ideal: adakahTelefon ? 1280 : 720 }
                     },
                     audio: false
                 };
@@ -218,30 +220,13 @@
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            // Menetapkan resolusi lukisan kanvas mengikut tetapan bingkai standard asal tanpa mengubah struktur
-            canvas.width = adakahTelefon ? 720 : 1280;
-            canvas.height = adakahTelefon ? 1280 : 720;
+            // Tetapkan saiz canvas mengikut resolusi fizikal sebenar video kamera peranti (mengekalkan nisbah sebenar telefon/laptop)
+            canvas.width = video.videoWidth || (adakahTelefon ? 720 : 1280);
+            canvas.height = video.videoHeight || (adakahTelefon ? 1280 : 720);
 
             ctx.save();
             ctx.scale(-1, 1);
-            
-            // Pengiraan proporsional mengelakkan muka terzoom atau terpotong pada hasil akhir
-            const vRatio = video.videoWidth / video.videoHeight;
-            const cRatio = canvas.width / canvas.height;
-            let dWidth = canvas.width;
-            let dHeight = canvas.height;
-            let dX = 0;
-            let dY = 0;
-
-            if (vRatio > cRatio) {
-                dHeight = canvas.width / vRatio;
-                dY = (canvas.height - dHeight) / 2;
-            } else {
-                dWidth = canvas.height * vRatio;
-                dX = (canvas.width - dWidth) / 2;
-            }
-
-            ctx.drawImage(video, -dX - dWidth, dY, dWidth, dHeight);
+            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
             ctx.restore();
 
             if (bingkaiOverlay.complete && bingkaiOverlay.naturalHeight !== 0) {
@@ -253,32 +238,28 @@
             butangMuatTurun.href = dataImej;
 
             const timestamp = new Date().getTime();
-            const namaFailImej = `Photobooth_DELIMa_${timestamp}.png`;
+            const namaFailImej = `Photobooth_KarnivalPekan_${timestamp}.png`;
             butangMuatTurun.download = namaFailImej;
             butangMuatTurun.click();
 
             statusDrive.innerText = "";
             statusDrive.className = "text-blue-600 font-semibold mb-4 animate-pulse";
 
-            if(URL_GOOGLE_SCRIPT !== "https://script.google.com/macros/s/AKfycbyIcPBN7vsSdO6aSaeXXkVxRA2I65-fGL5yuaqnb8IsHwWQihWYGxk8rhdraDjBGwMX/exec") {
-                fetch(URL_GOOGLE_SCRIPT, {
-                    method: 'POST',
-                    body: JSON.stringify({ image: dataImej, filename: namaFailImej }),
-                    headers: { "Content-Type": "text/plain;charset=utf-8" }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    statusDrive.innerText = "";
-                    statusDrive.className = "text-green-600 font-semibold mb-4";
-                })
-                .catch(error => {
-                    statusDrive.innerText = "";
-                    statusDrive.className = "text-amber-600 font-semibold mb-4";
-                });
-            } else {
-                statusDrive.innerText = "ℹ️ Gambar berjaya dimuat turun ke peranti anda.";
-                statusDrive.className = "text-gray-600 font-semibold mb-4";
-            }
+            // Hantar data imej asal mengikut saiz peranti ke Google Apps Script
+            fetch(URL_GOOGLE_SCRIPT, {
+                method: 'POST',
+                body: JSON.stringify({ image: dataImej, filename: namaFailImej }),
+                headers: { "Content-Type": "text/plain;charset=utf-8" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                statusDrive.innerText = "";
+                statusDrive.className = "text-green-600 font-semibold mb-4";
+            })
+            .catch(error => {
+                statusDrive.innerText = "";
+                statusDrive.className = "text-amber-600 font-semibold mb-4";
+            });
 
             ruangKamera.classList.add('hidden');
             ruangHasil.classList.remove('hidden');
