@@ -21,33 +21,30 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             background-color: #000;
             border: 8px solid #ffffff;
+            transition: all 0.3s ease;
         }
 
-        /* Mod Landscape (Laptop/Desktop) - Nisbah 16:9 */
         .mode-landscape {
             aspect-ratio: 16 / 9;
             max-width: 1024px;
         }
 
-        /* Mod Portrait (Handphone) - Nisbah 9:16 */
         .mode-portrait {
             aspect-ratio: 9 / 16;
             max-width: 420px;
         }
 
         #kamera {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            /* Guna cover untuk pastikan video memenuhi ruang frame tanpa ruang hitam */
+            /* Menggunakan cover dengan center alignment supaya sudut pandangan lebih luas dan tidak terzoom terlalu rapat */
             object-fit: cover;
+            object-position: center center;
             transform: scaleX(-1);
             background-color: #000;
-        }
-
-        #gambar-hasil {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
 
         #bingkai-overlay {
@@ -74,14 +71,11 @@
     </div>
 
     <div id="ruang-kamera" class="w-full px-2 md:px-4 mb-6 text-center">
-        <!-- Container kamera & Bingkai dengan kelas dinamik auto-detect -->
         <div id="wrapper-kamera" class="kamera-wrapper mode-landscape">
             <video id="kamera" autoplay playsinline muted></video>
             
-            <!-- Bingkai Overlay -->
             <img id="bingkai-overlay" src="" alt="Bingkai Photobooth">
             
-            <!-- Paparan Amaran & Butang Mula Kamera (Permission Handling) -->
             <div id="amaran-kamera" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-95 text-white p-6 z-20">
                 <div class="bg-blue-950 border border-blue-500 rounded-xl p-6 max-w-md mx-auto text-center shadow-2xl">
                     <span class="text-5xl mb-3 block">📸</span>
@@ -107,7 +101,7 @@
         <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse"></p>
         
         <div id="wrapper-hasil" class="kamera-wrapper mode-landscape mb-6">
-            <img id="gambar-hasil" src="" alt="Hasil Photobooth">
+            <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
         </div>
         <div class="flex flex-wrap justify-center gap-4">
             <button id="butang-semula" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 text-base md:text-lg">
@@ -121,7 +115,6 @@
     <canvas id="canvas" class="hidden"></canvas>
 
     <script>
-        // Pautan Google Apps Script rasmi
         const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbyIcPBN7vsSdO6aSaeXXkVxRA2I65-fGL5yuaqnb8IsHwWQihWYGxk8rhdraDjBGwMX/exec";
 
         const video = document.getElementById('kamera');
@@ -142,7 +135,6 @@
         const wrapperKamera = document.getElementById('wrapper-kamera');
         const wrapperHasil = document.getElementById('wrapper-hasil');
 
-        // Auto-detect peranti: Telefon bimbit guna portrait, laptop guna landscape
         const adakahTelefon = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
 
         let failBingkaiPilihan = "";
@@ -167,7 +159,7 @@
         async function bukaKamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 tajukAmaran.innerText = "Tidak Disokong";
-                teksRalatKamera.innerHTML = "Pelayar web anda tidak menyokong fungsi akses kamera. Sila gunakan pelayar moden seperti Chrome, Safari, atau Edge.";
+                teksRalatKamera.innerHTML = "Pelayar web anda tidak menyokong fungsi akses kamera.";
                 amaranKamera.classList.remove('hidden');
                 return;
             }
@@ -178,7 +170,6 @@
                     tracks.forEach(track => track.stop());
                 }
 
-                // Tetapan resolusi optimum mengikut jenis peranti supaya paparan kemas memenuhi frame
                 const constraints = {
                     video: {
                         facingMode: "user",
@@ -193,16 +184,14 @@
                 await video.play();
                 amaranKamera.classList.add('hidden');
             } catch (err) {
-                console.error("Ralat membuka kamera:", err);
+                console.warn("Ralat membuka kamera:", err);
                 tajukAmaran.innerText = "Akses Kamera Disekat";
-                let mesejRalat = "Gagal memuatkan kamera. Sila pastikan tiada aplikasi lain yang sedang menggunakan kamera anda.";
+                let mesejRalat = "Gagal memuatkan kamera. Sila pastikan anda memberi kebenaran akses.";
                 
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message.includes('Permission denied')) {
                     mesejRalat = "Akses kamera telah ditolak. Sila klik butang di bawah atau ikon kunci pada bar alamat pelayar untuk membenarkan akses <b>Allow</b>.";
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                } else if (err.name === 'NotFoundError') {
                     mesejRalat = "Tiada peranti kamera dikesan pada peranti ini.";
-                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                    mesejRalat = "Kamera sedang digunakan oleh aplikasi lain atau tab pelayar yang lain.";
                 }
                 
                 teksRalatKamera.innerHTML = mesejRalat;
@@ -223,7 +212,6 @@
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            // Tetapkan saiz canvas dengan tepat (Portrait: 720x1280, Landscape: 1280x720)
             if (adakahTelefon) {
                 canvas.width = 720;
                 canvas.height = 1280;
@@ -234,23 +222,23 @@
 
             ctx.save();
             ctx.scale(-1, 1);
-            // Lukiskan video pada kanvas mengikut orientasi sebenar tanpa herotan (menggunakan nisbah object-fit cover yang tepat)
+            
             const vRatio = video.videoWidth / video.videoHeight;
             const cRatio = canvas.width / canvas.height;
-            let sWidth = video.videoWidth;
-            let sHeight = video.videoHeight;
-            let sX = 0;
-            let sY = 0;
+            let renderW = canvas.width;
+            let renderH = canvas.height;
+            let offsetX = 0;
+            let offsetY = 0;
 
             if (vRatio > cRatio) {
-                sWidth = video.videoHeight * cRatio;
-                sX = (video.videoWidth - sWidth) / 2;
+                renderW = canvas.height * vRatio;
+                offsetX = (canvas.width - renderW) / 2;
             } else {
-                sHeight = video.videoWidth / cRatio;
-                sY = (video.videoHeight - sHeight) / 2;
+                renderH = canvas.width / vRatio;
+                offsetY = (canvas.height - renderH) / 2;
             }
 
-            ctx.drawImage(video, sX, sY, sWidth, sHeight, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, -canvas.width - offsetX, offsetY, renderW, renderH);
             ctx.restore();
 
             if (bingkaiOverlay.complete && bingkaiOverlay.naturalHeight !== 0) {
@@ -269,7 +257,6 @@
             statusDrive.innerText = "";
             statusDrive.className = "text-blue-600 font-semibold mb-4 animate-pulse";
 
-            // Hantar data imej dengan saiz tepat (Portrait 720x1280) ke Google Apps Script
             fetch(URL_GOOGLE_SCRIPT, {
                 method: 'POST',
                 body: JSON.stringify({ image: dataImej, filename: namaFailImej }),
