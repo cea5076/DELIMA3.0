@@ -21,7 +21,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             background-color: #000;
             border: 8px solid #ffffff;
-            transition: all 0.3s ease;
         }
 
         /* Mod Landscape (Laptop/Desktop) - Nisbah 16:9 */
@@ -39,9 +38,16 @@
         #kamera {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            /* Guna cover untuk pastikan video memenuhi ruang frame tanpa ruang hitam */
+            object-fit: cover;
             transform: scaleX(-1);
             background-color: #000;
+        }
+
+        #gambar-hasil {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         #bingkai-overlay {
@@ -101,7 +107,7 @@
         <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse"></p>
         
         <div id="wrapper-hasil" class="kamera-wrapper mode-landscape mb-6">
-            <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
+            <img id="gambar-hasil" src="" alt="Hasil Photobooth">
         </div>
         <div class="flex flex-wrap justify-center gap-4">
             <button id="butang-semula" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 text-base md:text-lg">
@@ -172,7 +178,7 @@
                     tracks.forEach(track => track.stop());
                 }
 
-                // Tetapan resolusi optimum mengikut jenis peranti
+                // Tetapan resolusi optimum mengikut jenis peranti supaya paparan kemas memenuhi frame
                 const constraints = {
                     video: {
                         facingMode: "user",
@@ -209,6 +215,10 @@
             bukaKamera();
         });
 
+        window.addEventListener('DOMContentLoaded', () => {
+            bukaKamera();
+        });
+
         butangSnap.addEventListener('click', () => {
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
@@ -224,8 +234,23 @@
 
             ctx.save();
             ctx.scale(-1, 1);
-            // Lukiskan video pada kanvas mengikut orientasi sebenar tanpa herotan
-            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            // Lukiskan video pada kanvas mengikut orientasi sebenar tanpa herotan (menggunakan nisbah object-fit cover yang tepat)
+            const vRatio = video.videoWidth / video.videoHeight;
+            const cRatio = canvas.width / canvas.height;
+            let sWidth = video.videoWidth;
+            let sHeight = video.videoHeight;
+            let sX = 0;
+            let sY = 0;
+
+            if (vRatio > cRatio) {
+                sWidth = video.videoHeight * cRatio;
+                sX = (video.videoWidth - sWidth) / 2;
+            } else {
+                sHeight = video.videoWidth / cRatio;
+                sY = (video.videoHeight - sHeight) / 2;
+            }
+
+            ctx.drawImage(video, sX, sY, sWidth, sHeight, -canvas.width, 0, canvas.width, canvas.height);
             ctx.restore();
 
             if (bingkaiOverlay.complete && bingkaiOverlay.naturalHeight !== 0) {
@@ -241,7 +266,7 @@
             butangMuatTurun.download = namaFailImej;
             butangMuatTurun.click();
 
-            statusDrive.innerText = "Menghantar salinan ke Google Drive pempamer...";
+            statusDrive.innerText = "";
             statusDrive.className = "text-blue-600 font-semibold mb-4 animate-pulse";
 
             // Hantar data imej dengan saiz tepat (Portrait 720x1280) ke Google Apps Script
