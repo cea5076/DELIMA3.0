@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photobooth DELIMa 3.0</title>
+    <title>Photobooth Digital DELIMa 3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -47,18 +47,18 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-8 font-sans">
+<body class="min-h-screen flex flex-col items-center py-4 md:py-8 font-sans">
 
-    <div class="text-center mb-6 px-4">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-blue-800 mb-2 drop-shadow-md">
+    <div class="text-center mb-4 md:mb-6 px-2 md:px-4">
+        <h1 class="text-3xl md:text-5xl font-extrabold text-blue-800 mb-2 drop-shadow-md">
             Photobooth Digital
         </h1>
-        <p class="text-xl md:text-2xl text-blue-600 font-semibold">
+        <p class="text-lg md:text-2xl text-blue-600 font-semibold">
             Karnival Pendidikan Madani & Inovasi DELIMa 3.0
         </p>
     </div>
 
-    <div id="ruang-kamera" class="w-full px-4 mb-6 text-center">
+    <div id="ruang-kamera" class="w-full px-2 md:px-4 mb-6 text-center">
         <!-- Container kamera & Bingkai -->
         <div class="kamera-wrapper relative">
             <!-- Paparan WebCam -->
@@ -85,16 +85,16 @@
         <div class="kamera-wrapper mb-8">
             <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
         </div>
-        
-        <div class="flex flex-wrap justify-center gap-6">
+        <div class="flex flex-wrap justify-center gap-4 md:gap-6">
             <!-- Butang Ambil Semula -->
-            <button id="butang-semula" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105 text-xl">
+            <button id="butang-semula" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 md:py-4 px-8 md:px-10 rounded-full shadow-lg transition transform hover:scale-105 text-lg md:text-xl">
                 🔄 Ambil Gambar Baru
             </button>
             <!-- Butang muat turun (Tersembunyi, sistem akan klik ini secara automatik) -->
             <a id="butang-muatturun" href="#" download="Photobooth_DELIMa.png" class="hidden"></a>
         </div>
-        <p class="mt-4 text-gray-600 font-medium">*Gambar telah dimasukkan ke dalam folder Downloads di komputer ini.</p>
+        <p class="mt-4 text-gray-600 font-medium text-sm md:text-base">*Gambar sepatutnya dimuat turun secara automatik.</p>
+        <p class="mt-2 text-sm text-red-600 font-bold md:hidden animate-pulse">📱 Pengguna Telefon: Jika tidak download, tekan lama (long-press) pada gambar di atas dan pilih "Save Image" / "Download Image".</p>
     </div>
 
     <canvas id="canvas" class="hidden"></canvas>
@@ -116,7 +116,14 @@
         const resolusiKamera = { width: 1280, height: 720 };
 
         // 1. Minta kebenaran dan buka Kamera bila laman web dibuka
-        navigator.mediaDevices.getUserMedia({ video: { width: resolusiKamera.width, height: resolusiKamera.height, facingMode: "user" } })
+        // Menggunakan 'ideal' supaya telefon pintar tidak ralat jika saiz kamera berbeza
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 1280 }, 
+                height: { ideal: 720 }, 
+                facingMode: "user" // Paksa guna kamera depan (selfie) untuk handphone
+            } 
+        })
             .then(stream => {
                 video.srcObject = stream;
             })
@@ -135,13 +142,33 @@
             canvas.width = resolusiKamera.width;
             canvas.height = resolusiKamera.height;
 
+            // PENTING: Pengiraan untuk 'Crop' video supaya fit 16:9 tanpa herot
+            // Ini sangat penting untuk telefon pintar yang dipegang menegak (portrait)
+            let sWidth = video.videoWidth;
+            let sHeight = video.videoHeight;
+            let sx = 0, sy = 0;
+            const targetRatio = canvas.width / canvas.height; // Nisbah 16:9
+            const videoRatio = sWidth / sHeight;
+
+            if (videoRatio > targetRatio) {
+                // Video lebih lebar (potong kiri & kanan)
+                let newWidth = sHeight * targetRatio;
+                sx = (sWidth - newWidth) / 2;
+                sWidth = newWidth;
+            } else {
+                // Video lebih tinggi (potong atas & bawah - Khas untuk Handphone Portrait)
+                let newHeight = sWidth / targetRatio;
+                sy = (sHeight - newHeight) / 2;
+                sHeight = newHeight;
+            }
+
             // PENTING: Oleh kerana kita buat video kesan cermin (mirror), 
             // kita kena lukis dalam canvas secara terbalik juga supaya hasilnya betul!
             ctx.save(); // Simpan keadaan canvas
             ctx.scale(-1, 1); // Terbalikkan paksi X
             
-            // Lukis gambar dari video ke canvas. (Koordinat X jadi negatif sebab dah terbalik)
-            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            // Lukis gambar dari video yang telah di'crop' ke canvas
+            ctx.drawImage(video, sx, sy, sWidth, sHeight, -canvas.width, 0, canvas.width, canvas.height);
             ctx.restore(); // Kembalikan keadaan canvas normal supaya bingkai tak terbalik teksnya
 
             // Lukis bingkai Canva di lapisan atas
