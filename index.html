@@ -99,7 +99,7 @@
     <div id="ruang-hasil" class="w-full px-4 text-center hidden">
         <h2 class="text-3xl font-bold text-green-600 mb-6 drop-shadow-sm">Gambar Berjaya Disimpan! 🎉</h2>
         
-        <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse">Menghantar salinan ke Google Drive pempamer...</p>
+        <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse"></p>
         
         <div id="wrapper-hasil" class="kamera-wrapper mode-landscape mb-8">
             <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
@@ -276,7 +276,7 @@
                     statusDrive.className = "text-amber-600 font-semibold mb-4";
                 });
             } else {
-                statusDrive.innerText = "ℹ️ Gambar berjaya dimuat turun ke peranti anda. (Mod Luar Talian / Pautan Drive belum diisi).";
+                statusDrive.innerText = "ℹ️ Gambar berjaya dimuat turun ke peranti anda.";
                 statusDrive.className = "text-gray-600 font-semibold mb-4";
             }
 
