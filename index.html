@@ -39,7 +39,6 @@
         #kamera {
             width: 100%;
             height: 100%;
-            /* Menggunakan contain supaya muka tidak terzoom rapat melampau */
             object-fit: contain;
             transform: scaleX(-1);
             background-color: #000;
@@ -116,7 +115,7 @@
     <canvas id="canvas" class="hidden"></canvas>
 
     <script>
-        // Pautan Google Apps Script rasmi yang diberikan
+        // Pautan Google Apps Script rasmi
         const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbyIcPBN7vsSdO6aSaeXXkVxRA2I65-fGL5yuaqnb8IsHwWQihWYGxk8rhdraDjBGwMX/exec";
 
         const video = document.getElementById('kamera');
@@ -189,11 +188,11 @@
                 amaranKamera.classList.add('hidden');
             } catch (err) {
                 console.error("Ralat membuka kamera:", err);
-                tajukAmaran.innerText = "Akses Kamera Disekat / Gagal";
+                tajukAmaran.innerText = "Akses Kamera Disekat";
                 let mesejRalat = "Gagal memuatkan kamera. Sila pastikan tiada aplikasi lain yang sedang menggunakan kamera anda.";
                 
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message.includes('Permission denied')) {
-                    mesejRalat = "Akses kamera telah ditolak oleh pelayar web. Sila klik ikon kunci/kamera di bar alamat pelayar, tukar kebenaran kepada <b>Allow</b>, kemudian klik butang di bawah.";
+                    mesejRalat = "Akses kamera telah ditolak. Sila klik butang di bawah atau ikon kunci pada bar alamat pelayar untuk membenarkan akses <b>Allow</b>.";
                 } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
                     mesejRalat = "Tiada peranti kamera dikesan pada peranti ini.";
                 } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
@@ -201,7 +200,7 @@
                 }
                 
                 teksRalatKamera.innerHTML = mesejRalat;
-                butangMulaKamera.innerText = "🔄 Cuba Buka Semula Kamera";
+                butangMulaKamera.innerText = "🔄 Cuba Buka Semula";
                 amaranKamera.classList.remove('hidden');
             }
         }
@@ -214,7 +213,7 @@
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            // Tetapkan saiz canvas mengikut resolusi fizikal sebenar peranti tanpa herotan
+            // Tetapkan saiz canvas dengan tepat (Portrait: 720x1280, Landscape: 1280x720)
             if (adakahTelefon) {
                 canvas.width = 720;
                 canvas.height = 1280;
@@ -225,6 +224,7 @@
 
             ctx.save();
             ctx.scale(-1, 1);
+            // Lukiskan video pada kanvas mengikut orientasi sebenar tanpa herotan
             ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
             ctx.restore();
 
@@ -241,10 +241,10 @@
             butangMuatTurun.download = namaFailImej;
             butangMuatTurun.click();
 
-            statusDrive.innerText = "Menghantar salinan ke Google Drive pempamer...";
+            statusDrive.innerText = "";
             statusDrive.className = "text-blue-600 font-semibold mb-4 animate-pulse";
 
-            // Hantar data imej mengikut saiz peranti ke Google Apps Script
+            // Hantar data imej dengan saiz tepat (Portrait 720x1280) ke Google Apps Script
             fetch(URL_GOOGLE_SCRIPT, {
                 method: 'POST',
                 body: JSON.stringify({ image: dataImej, filename: namaFailImej }),
