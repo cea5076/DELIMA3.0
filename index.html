@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photobooth Digital DELIMa 3.0</title>
+    <title>Photobooth DELIMa 3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -82,6 +82,8 @@
     <div id="ruang-hasil" class="w-full px-4 text-center hidden">
         <h2 class="text-3xl font-bold text-green-600 mb-6 drop-shadow-sm">Gambar Berjaya Disimpan! 🎉</h2>
         
+        <p id="status-drive" class="text-blue-600 font-semibold mb-4 animate-pulse">Menghantar salinan ke Google Drive pempamer...</p>
+        
         <div class="kamera-wrapper mb-8">
             <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
         </div>
@@ -100,6 +102,9 @@
     <canvas id="canvas" class="hidden"></canvas>
 
     <script>
+        // TAMPALKAN WEB APP URL DARI GOOGLE APPS SCRIPT DI SINI
+        const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbxX44bGBCepppFLoLNxJKPD3Q7yEJ5GRY5MJAHBtjR3we3NSyYsNTKLyTfTO9dfrF9cgA/exec";
+
         const video = document.getElementById('kamera');
         const bingkaiOverlay = document.getElementById('bingkai-overlay');
         const canvas = document.getElementById('canvas');
@@ -111,6 +116,7 @@
         const ruangKamera = document.getElementById('ruang-kamera');
         const ruangHasil = document.getElementById('ruang-hasil');
         const amaranKamera = document.getElementById('amaran-kamera');
+        const statusDrive = document.getElementById('status-drive'); // Tambahan elemen status
 
         // Resolusi tetapan standard HD (16:9) yang selari dengan rekaan Canva cikgu
         const resolusiKamera = { width: 1280, height: 720 };
@@ -185,10 +191,44 @@
 
             // --- FUNGSI AUTO-DOWNLOAD DENGAN NAMA FAIL UNIK ---
             const timestamp = new Date().getTime(); // Dapatkan masa unik
-            butangMuatTurun.download = `Photobooth_DELIMa_${timestamp}.png`;
+            const namaFailImej = `Photobooth_DELIMa_${timestamp}.png`;
+            butangMuatTurun.download = namaFailImej;
             
-            // Sistem tolong 'klik' secara automatik untuk save ke laptop
+            // Sistem tolong 'klik' secara automatik untuk save ke peranti pengguna
             butangMuatTurun.click();
+            // --------------------------------------------------
+
+            // --- FUNGSI HANTAR KE GOOGLE DRIVE PEMPAMER ---
+            // Tunjuk teks loading
+            statusDrive.innerText = "Menghantar salinan ke Google Drive pempamer...";
+            statusDrive.classList.add("animate-pulse", "text-blue-600");
+            statusDrive.classList.remove("text-green-600", "text-red-600");
+
+            if(URL_GOOGLE_SCRIPT !== "LETAK_WEB_APP_URL_CIKGU_DI_SINI") {
+                fetch(URL_GOOGLE_SCRIPT, {
+                    method: 'POST',
+                    body: JSON.stringify({ image: dataImej, filename: namaFailImej }),
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8",
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Berjaya ke Drive!", data);
+                    statusDrive.innerText = "✅ Salinan berjaya disimpan di Drive pempamer!";
+                    statusDrive.classList.replace("text-blue-600", "text-green-600");
+                    statusDrive.classList.remove("animate-pulse");
+                })
+                .catch(error => {
+                    console.error("Ralat:", error);
+                    statusDrive.innerText = "❌ Ralat menghantar ke Drive, tetapi gambar anda telah dimuat turun.";
+                    statusDrive.classList.replace("text-blue-600", "text-red-600");
+                    statusDrive.classList.remove("animate-pulse");
+                });
+            } else {
+                statusDrive.innerText = "Sistem Drive belum dikonfigurasi.";
+                statusDrive.classList.remove("animate-pulse");
+            }
             // --------------------------------------------------
 
             // Ubah paparan: Sembunyikan live kamera, tunjukkan hasil bergambar
