@@ -63,7 +63,7 @@
             Photobooth Digital
         </h1>
         <p class="text-lg md:text-2xl text-blue-600 font-semibold">
-            Karnival Pendidikan Madani Daerah Pekan 2026
+            Karnival Pendidikan MADANI Daerah Pekan Tahun 2026
         </p>
     </div>
 
@@ -122,37 +122,40 @@
         const wrapperKamera = document.getElementById('wrapper-kamera');
         const wrapperHasil = document.getElementById('wrapper-hasil');
 
-        // --- AUTO-DETECT PERANTI & TETAPAN RESOLUSI ---
-        // Semak sama ada peranti mudah alih (Mobile/Tablet) atau komputer
+        // --- AUTO-DETECT PERANTI & TETAPAN RESOLUSI LUAS (TIDAK ZOOM) ---
         const adakahTelefon = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
 
         let resolusiKamera;
         let failBingkaiPilihan = "";
 
         if (adakahTelefon) {
-            // Mod Portrait untuk telefon bimbit (Nisbah 9:16)
-            resolusiKamera = { width: 720, height: 1280 };
-            failBingkaiPilihan = "bingkai_portrait.png"; // Nama fail bingkai menegak cikgu
+            // Lebarkan sudut pandangan kamera telefon dan kurangkan paksaan zoom dekat
+            resolusiKamera = { 
+                width: { ideal: 720 }, 
+                height: { ideal: 1280 } 
+            };
+            failBingkaiPilihan = "bingkai_portrait.png"; 
             
             wrapperKamera.className = "kamera-wrapper mode-portrait";
             wrapperHasil.className = "kamera-wrapper mode-portrait";
         } else {
-            // Mod Landscape untuk Laptop / PC (Nisbah 16:9)
-            resolusiKamera = { width: 1280, height: 720 };
-            failBingkaiPilihan = "bingkai_landscape.png"; // Nama fail bingkai melintang cikgu
+            resolusiKamera = { 
+                width: { ideal: 1280 }, 
+                height: { ideal: 720 } 
+            };
+            failBingkaiPilihan = "bingkai_landscape.png"; 
             
             wrapperKamera.className = "kamera-wrapper mode-landscape";
             wrapperHasil.className = "kamera-wrapper mode-landscape";
         }
 
-        // Masukkan fail bingkai yang betul secara automatik
         bingkaiOverlay.src = failBingkaiPilihan;
 
-        // 1. Minta kebenaran dan buka Kamera mengikut orientasi peranti
+        // 1. Minta kebenaran dan buka Kamera mengikut tetapan luas
         navigator.mediaDevices.getUserMedia({ 
             video: { 
-                width: { ideal: resolusiKamera.width }, 
-                height: { ideal: resolusiKamera.height }, 
+                width: resolusiKamera.width, 
+                height: resolusiKamera.height, 
                 facingMode: "user" 
             } 
         })
@@ -169,28 +172,13 @@
             const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
             snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            canvas.width = resolusiKamera.width;
-            canvas.height = resolusiKamera.height;
-
-            let sWidth = video.videoWidth;
-            let sHeight = video.videoHeight;
-            let sx = 0, sy = 0;
-            const targetRatio = canvas.width / canvas.height;
-            const videoRatio = sWidth / sHeight;
-
-            if (videoRatio > targetRatio) {
-                let newWidth = sHeight * targetRatio;
-                sx = (sWidth - newWidth) / 2;
-                sWidth = newWidth;
-            } else {
-                let newHeight = sWidth / targetRatio;
-                sy = (sHeight - newHeight) / 2;
-                sHeight = newHeight;
-            }
+            // Tetapkan saiz canvas berdasarkan saiz sebenar video kamera yang diterima
+            canvas.width = video.videoWidth || (adakahTelefon ? 720 : 1280);
+            canvas.height = video.videoHeight || (adakahTelefon ? 1280 : 720);
 
             ctx.save();
             ctx.scale(-1, 1);
-            ctx.drawImage(video, sx, sy, sWidth, sHeight, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
             ctx.restore();
 
             if (bingkaiOverlay.complete && bingkaiOverlay.naturalHeight !== 0) {
@@ -218,6 +206,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    statusDirectory.innerText = "✅ Salinan berjaya disimpan di Drive pempamer!";
                     statusDrive.innerText = "✅ Salinan berjaya disimpan di Drive pempamer!";
                     statusDrive.classList.replace("text-blue-600", "text-green-600");
                     statusDrive.classList.remove("animate-pulse");
