@@ -3,75 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photobooth DELIMa & Inovasi PdPc</title>
+    <title>Photobooth DELIMa 3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Memastikan video dan bingkai bertindih dengan betul */
-        .camera-container {
+        body {
+            /* Latar belakang ceria sesuai dengan tema karnival */
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#bbf7d0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .kamera-wrapper {
+            /* Memastikan nisbah sentiasa 16:9 (widescreen) */
+            aspect-ratio: 16 / 9;
             position: relative;
             width: 100%;
-            max-width: 640px;
+            max-width: 1024px; /* Saiz paparan maksimum yang besar */
             margin: 0 auto;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             background-color: #000;
+            border: 8px solid #ffffff;
         }
+
         #kamera {
             width: 100%;
-            height: auto;
-            display: block;
+            height: 100%;
+            object-fit: cover; /* Pastikan video memenuhi ruang tanpa stretch */
+            /* Kesan cermin supaya pengguna nampak paparan seperti di cermin */
+            transform: scaleX(-1);
         }
+
         #bingkai-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            object-fit: cover; /* Pastikan bingkai tepat memenuhi ruang */
             pointer-events: none; /* Supaya klik tidak terhalang */
             z-index: 10;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10 font-sans">
+<body class="min-h-screen flex flex-col items-center py-8 font-sans">
 
-    <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-blue-700 mb-2">Photobooth Madani</h1>
-        <p class="text-lg text-gray-600">Booth DELIMa 3.0 & Inovasi Game PdPc</p>
+    <div class="text-center mb-6 px-4">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-blue-800 mb-2 drop-shadow-md">
+            Photobooth Digital
+        </h1>
+        <p class="text-xl md:text-2xl text-blue-600 font-semibold">
+            Karnival Pendidikan Madani & Inovasi DELIMa 3.0
+        </p>
     </div>
 
-    <!-- Bahagian Kamera Langsung -->
     <div id="ruang-kamera" class="w-full px-4 mb-6 text-center">
-        <div class="camera-container">
+        <!-- Container kamera & Bingkai -->
+        <div class="kamera-wrapper relative">
             <!-- Paparan WebCam -->
             <video id="kamera" autoplay playsinline></video>
-            <!-- Bingkai dari Canva (Pastikan nama fail ini betul di komputer anda) -->
-            <img id="bingkai-overlay" src="bingkai.png" alt="Bingkai" onerror="this.style.display='none'">
+            
+            <!-- Bingkai dari Canva (Pastikan nama fail 'bingkai.png' dan ia transparent) -->
+            <img id="bingkai-overlay" src="bingkai.png" alt="Bingkai Photobooth">
+            
+            <!-- Notifikasi jika kamera gagal berfungsi -->
+            <div id="amaran-kamera" class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-80 text-white p-6 hidden z-20">
+                <p class="text-xl font-bold text-center">Sila benarkan (Allow) akses kamera di pelayar web anda.</p>
+            </div>
         </div>
         
-        <button id="butang-snap" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg transition duration-300 transform hover:scale-105">
+        <!-- Butang Snap yang lebih besar dan menarik -->
+        <button id="butang-snap" class="mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-4 px-12 rounded-full text-2xl shadow-[0_10px_20px_rgba(37,99,235,0.4)] transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 active:scale-95 border-4 border-blue-300">
             📸 SNAP GAMBAR!
         </button>
     </div>
 
-    <!-- Bahagian Paparan Hasil Gambar -->
     <div id="ruang-hasil" class="w-full px-4 text-center hidden">
-        <h2 class="text-2xl font-bold text-green-600 mb-4">Gambar Berjaya Diambil! 🎉</h2>
-        <div class="camera-container mb-6">
-            <img id="gambar-hasil" class="w-full h-auto" src="" alt="Hasil Photobooth">
+        <h2 class="text-3xl font-bold text-green-600 mb-6 drop-shadow-sm">Gambar Berjaya Disimpan! 🎉</h2>
+        
+        <div class="kamera-wrapper mb-8">
+            <img id="gambar-hasil" class="w-full h-full object-cover" src="" alt="Hasil Photobooth">
         </div>
         
-        <div class="flex justify-center gap-4">
-            <button id="butang-semula" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full shadow transition">
-                Ambil Semula
+        <div class="flex flex-wrap justify-center gap-6">
+            <!-- Butang Ambil Semula -->
+            <button id="butang-semula" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105 text-xl">
+                🔄 Ambil Gambar Baru
             </button>
-            <a id="butang-muatturun" href="#" download="Photobooth_DELIMa.png" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow transition">
-                ⬇️ Muat Turun
-            </a>
+            <!-- Butang muat turun (Tersembunyi, sistem akan klik ini secara automatik) -->
+            <a id="butang-muatturun" href="#" download="Photobooth_DELIMa.png" class="hidden"></a>
         </div>
+        <p class="mt-4 text-gray-600 font-medium">*Gambar telah dimasukkan ke dalam folder Downloads di komputer ini.</p>
     </div>
 
-    <!-- Canvas Tersembunyi untuk proses penggabungan gambar dan bingkai -->
     <canvas id="canvas" class="hidden"></canvas>
 
     <script>
@@ -85,54 +110,66 @@
         const butangMuatTurun = document.getElementById('butang-muatturun');
         const ruangKamera = document.getElementById('ruang-kamera');
         const ruangHasil = document.getElementById('ruang-hasil');
+        const amaranKamera = document.getElementById('amaran-kamera');
 
-        // 1. Minta kebenaran dan buka Kamera
-        navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
+        // Resolusi tetapan standard HD (16:9) yang selari dengan rekaan Canva cikgu
+        const resolusiKamera = { width: 1280, height: 720 };
+
+        // 1. Minta kebenaran dan buka Kamera bila laman web dibuka
+        navigator.mediaDevices.getUserMedia({ video: { width: resolusiKamera.width, height: resolusiKamera.height, facingMode: "user" } })
             .then(stream => {
                 video.srcObject = stream;
             })
             .catch(err => {
                 console.error("Ralat membuka kamera:", err);
-                alert("Sila benarkan akses kamera untuk menggunakan photobooth ini.");
+                amaranKamera.classList.remove('hidden'); // Tunjuk amaran jika kamera disekat
             });
 
         // 2. Fungsi apabila butang SNAP ditekan
         butangSnap.addEventListener('click', () => {
-            // Tetapkan saiz canvas sama dengan saiz video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Mainkan bunyi shutter secara maya (pilihan)
+            const snapSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3');
+            snapSound.play().catch(e => console.log("Audio cannot play automatically"));
 
-            // Lukis gambar dari video ke canvas
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Tetapkan saiz canvas ngam-ngam ikut resolusi HD 1280x720
+            canvas.width = resolusiKamera.width;
+            canvas.height = resolusiKamera.height;
 
-            // Lukis bingkai di atas gambar video
-            // (Jika fail bingkai.png wujud dan berjaya dimuat)
+            // PENTING: Oleh kerana kita buat video kesan cermin (mirror), 
+            // kita kena lukis dalam canvas secara terbalik juga supaya hasilnya betul!
+            ctx.save(); // Simpan keadaan canvas
+            ctx.scale(-1, 1); // Terbalikkan paksi X
+            
+            // Lukis gambar dari video ke canvas. (Koordinat X jadi negatif sebab dah terbalik)
+            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.restore(); // Kembalikan keadaan canvas normal supaya bingkai tak terbalik teksnya
+
+            // Lukis bingkai Canva di lapisan atas
             if (bingkaiOverlay.complete && bingkaiOverlay.naturalHeight !== 0) {
                  ctx.drawImage(bingkaiOverlay, 0, 0, canvas.width, canvas.height);
             }
 
-            // Tukar canvas menjadi URL Imej
+            // Tukar canvas menjadi fail Imej (PNG)
             const dataImej = canvas.toDataURL('image/png');
             
-            // Paparkan di skrin
+            // Paparkan gambar hasil di skrin supaya pengunjung boleh lihat
             gambarHasil.src = dataImej;
             butangMuatTurun.href = dataImej;
 
-            // --- FUNGSI BARU: AUTO-DOWNLOAD & NAMA FAIL UNIK ---
-            // Dapatkan masa sekarang (cth: 1716382910) supaya nama fail tak bertindih
-            const timestamp = new Date().getTime();
-            butangMuatTurun.download = `Photobooth_Madani_${timestamp}.png`;
+            // --- FUNGSI AUTO-DOWNLOAD DENGAN NAMA FAIL UNIK ---
+            const timestamp = new Date().getTime(); // Dapatkan masa unik
+            butangMuatTurun.download = `Photobooth_DELIMa_${timestamp}.png`;
             
-            // Sistem tolong 'klik' butang muat turun secara automatik
+            // Sistem tolong 'klik' secara automatik untuk save ke laptop
             butangMuatTurun.click();
             // --------------------------------------------------
 
-            // Sembunyikan kamera, tunjukkan hasil
+            // Ubah paparan: Sembunyikan live kamera, tunjukkan hasil bergambar
             ruangKamera.classList.add('hidden');
             ruangHasil.classList.remove('hidden');
         });
 
-        // 3. Fungsi untuk ambil gambar semula
+        // 3. Fungsi butang "Ambil Gambar Baru"
         butangSemula.addEventListener('click', () => {
             ruangKamera.classList.remove('hidden');
             ruangHasil.classList.add('hidden');
