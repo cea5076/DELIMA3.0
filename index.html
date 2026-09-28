@@ -137,9 +137,10 @@
         const butangTukarKamera = document.getElementById('butang-tukar-kamera');
 
         function mulakanKamera() {
-            // Hentikan kamera sebelumnya jika ada
+            // Hentikan kamera sebelumnya dan buang dari memori
             if (streamSemasa) {
                 streamSemasa.getTracks().forEach(track => track.stop());
+                video.srcObject = null; 
             }
             
             // Ubah kesan cermin pada paparan video
@@ -149,21 +150,43 @@
                 video.style.transform = "scaleX(1)";  // Normal jika kamera belakang
             }
 
-            navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: modKamera,
-                    width: { ideal: 1920 }, // Minta resolusi tinggi untuk gambar tajam
-                    height: { ideal: 1080 }
-                } 
-            })
-            .then(stream => {
-                streamSemasa = stream;
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                console.error("Ralat membuka kamera:", err);
-                amaranKamera.classList.remove('hidden');
-            });
+            // Beri masa (0.2 saat) supaya sistem telefon melepaskan "lock" pada lensa kamera lama
+            setTimeout(() => {
+                // Kod 'exact' untuk memaksa telefon guna lensa belakang
+                let kekangan = {
+                    video: { 
+                        facingMode: modKamera === "environment" ? { exact: "environment" } : "user",
+                        width: { ideal: 1920 }, 
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                navigator.mediaDevices.getUserMedia(kekangan)
+                .then(stream => {
+                    streamSemasa = stream;
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.log("Cuba kamera alternatif...", err);
+                    // Jika kod paksa gagal (contoh: buka guna laptop yg tiada kamera belakang)
+                    // Ia akan guna fungsi asal tanpa paksaan (fallback)
+                    navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: modKamera,
+                            width: { ideal: 1920 },
+                            height: { ideal: 1080 }
+                        } 
+                    })
+                    .then(stream2 => {
+                        streamSemasa = stream2;
+                        video.srcObject = stream2;
+                    })
+                    .catch(err2 => {
+                        console.error("Ralat kamera:", err2);
+                        amaranKamera.classList.remove('hidden');
+                    });
+                });
+            }, 200); 
         }
 
         mulakanKamera(); // Mula kamera sebaik web dibuka
